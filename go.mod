@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-postgresql
+module github.com/haydn-j-evans/terraform-provider-postgresql
 
 go 1.24.0
 

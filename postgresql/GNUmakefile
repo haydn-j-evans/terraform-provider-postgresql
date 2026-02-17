@@ -10,7 +10,7 @@ POSTGRES?=$(wildcard /usr/local/bin/postgres /opt/local/lib/postgresql$(PGVERSIO
 PSQL?=$(wildcard /usr/local/bin/psql /opt/local/lib/postgresql$(PGVERSION)/bin/psql)
 INITDB?=$(wildcard /usr/local/bin/initdb /opt/local/lib/postgresql$(PGVERSION)/bin/initdb)
 
-PGDATA?=$(GOPATH)/src/github.com/terraform-providers/terraform-provider-postgresql/data
+PGDATA?=$(GOPATH)/src/github.com/haydn-j-evans/terraform-provider-postgresql/data
 
 initdb::
 	-cat /dev/urandom | strings | grep -o '[[:alnum:]]' | head -n 32 | tr -d '\n' > pwfile

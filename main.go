@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/terraform-providers/terraform-provider-postgresql/postgresql"
+	"github.com/haydn-j-evans/terraform-provider-postgresql/postgresql"
 )
 
 func main() {
