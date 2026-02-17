@@ -7,9 +7,19 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lib/pq"
 )
+
+// versionDependentPrivileges defines privileges that only exist on certain
+// PostgreSQL versions. When expanding "ALL" privileges, entries whose version
+// range does not match the running server are excluded.
+var versionDependentPrivileges = map[string]map[string]semver.Range{
+	"table": {
+		"MAINTAIN": semver.MustParseRange(">=17.0.0"),
+	},
+}
 
 func PGResourceFunc(fn func(*DBConnection, *schema.ResourceData) error) func(*schema.ResourceData, any) error {
 	return func(d *schema.ResourceData, meta any) error {
@@ -281,7 +291,7 @@ func validatePrivileges(d *schema.ResourceData) error {
 	return nil
 }
 
-func resourcePrivilegesEqual(granted *schema.Set, d *schema.ResourceData) bool {
+func resourcePrivilegesEqual(granted *schema.Set, d *schema.ResourceData, version semver.Version) bool {
 	objectType := d.Get("object_type").(string)
 	wanted := d.Get("privileges").(*schema.Set)
 
@@ -297,9 +307,18 @@ func resourcePrivilegesEqual(granted *schema.Set, d *schema.ResourceData) bool {
 	log.Printf("The wanted privilege is 'ALL'. therefore, we will check if the current privileges are ALL implicitly")
 	implicits := []any{}
 	for _, p := range allowedPrivileges[objectType] {
-		if p != "ALL" {
-			implicits = append(implicits, p)
+		if p == "ALL" {
+			continue
 		}
+		// Skip privileges not supported by this PG version
+		if vdp, ok := versionDependentPrivileges[objectType]; ok {
+			if versionRange, ok := vdp[p]; ok {
+				if !versionRange(version) {
+					continue
+				}
+			}
+		}
+		implicits = append(implicits, p)
 	}
 	wantedSet := schema.NewSet(schema.HashString, implicits)
 	return granted.Equal(wantedSet)
